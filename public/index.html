@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overthrow Game</title>
+    <!-- Import Medieval Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- NEW DARK FANTASY THEME --- */
+
+        body {
+            font-family: 'Cinzel', serif; /* Medieval Font */
+            background-color: #2a2a2a; /* Dark Charcoal Background */
+            margin: 0;
+            padding: 20px;
+            color: #d2b48c; /* Parchment/Tan Text */
+        }
+        
+        h2, h3, h4 {
+            font-weight: 700;
+            color: #d2b48c;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* Lobby and Room Styling */
+        #lobby, #room {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #4a2c2a; /* Deep Burgundy/Brown */
+            border-radius: 4px;
+            border: 1px solid #1a1a1a;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+        }
+
+        input[type="text"] {
+            background-color: #2a2a2a;
+            color: #d2b48c;
+            border: 1px solid #d2b48c;
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+        }
+        
+        input[type="text"]::placeholder {
+            color: #d2b48c;
+            opacity: 0.6;
+        }
+
+        button {
+            background-color: #d2b48c; /* Parchment/Tan */
+            color: #2a2a2a; /* Dark Charcoal Text */
+            border: 1px solid #1a1a1a;
+            border-radius: 2px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            padding: 12px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #c8a86b; /* Muted Gold on hover */
+            box-shadow: 0 0 5px #d2b48c;
+        }
+
+        /* Main Game Container */
+        #game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: auto;
+        }
+
+        #game-board {
+            flex-grow: 1;
+        }
+
+        /* Player Grid - Solid Borders */
+        #player-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-top: 2px solid #1a1a1a;
+            border-left: 2px solid #1a1a1a;
+        }
+
+        /* Individual Player Box */
+        .player-box {
+            background: #4a2c2a; /* Deep Burgundy/Brown */
+            padding: 20px;
+            min-height: 220px;
+            border-right: 2px solid #1a1a1a;
+            border-bottom: 2px solid #1a1a1a;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .player-box.is-turn {
+            background-color: #6a3a3a; /* Lighter Red/Brown for turn */
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+        
+        .player-box.is-me {
+            border: 2px solid #d2b48c; /* Parchment border for your box */
+        }
+        
+        .player-box h4 {
+            margin-top: 0;
+            border-bottom: 1px solid #d2b48c;
+            padding-bottom: 10px;
+        }
+
+        .revealed-cards {
+            color: #ff7b7b; /* A brighter, more ominous red */
+            font-weight: bold;
+        }
+        
+        .player-box.is-eliminated {
+            background-color: #2a2a2a;
+            opacity: 0.5;
+        }
+
+        /* Action Menu Area */
+        #action-menu {
+            background: #4a2c2a;
+            padding: 15px;
+            border: 2px solid #1a1a1a;
+            min-height: 120px;
+            margin-top: 20px;
+        }
+        #action-menu button {
+            width: auto;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* Sidebar for Action Log */
+        #sidebar {
+            width: 350px;
+            flex-shrink: 0;
+            background: #4a2c2a;
+            padding: 15px;
+            border: 2px solid #1a1a1a;
+            
+        }
+
+        #action-log {
+            height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid #d2b48c;
+            padding-top: 10px;
+            color: #e0dcd1; /* Lighter parchment for log readability */
+            font-family: Arial, sans-serif; /* Use a simpler font for the log */
+        }
+        .cards-area {
+            display: flex;
+            margin-top: 10px;
+            flex-grow: 1; /* Allows this area to fill the space */
+            align-items: center; /* Center cards vertically */
+        }
+
+        .card-image {
+            height: 180px; /* Adjust size as needed */
+            width: auto;
+            border: 2px solid #1a1a1a;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .card-image:not(:first-child) {
+            margin-left: 5px;
+        }
+        .player-info-area {
+            display: flex; /* This will place cards and coins side-by-side */
+            align-items: center; /* This vertically aligns them */
+            gap: 20px; /* Adds some space between cards and coins */
+        }
+
+        .coins-area {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns */
+            gap: 5px; /* Space between coins */
+            width: 80px; /* Fixed width for the coin grid */
+        }
+
+        .coin-image {
+            width: 20px; /* Adjust size as needed */
+            height: 20px;
+        }
+
+        #chat-area {
+            margin-top: 20px;
+            border-top: 1px solid #d2b48c;
+            padding-top: 10px;
+        }
+        #chat-input {
+            width: calc(100% - 22px); /* Adjust for padding and border */
+        }
+        #send-chat-btn {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        /* --- NEW CSS FOR RULES MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            width: 80%;
+            max-width: 800px;
+            height: 80%;
+            background-color: #2a2a2a; /* Match the body background */
+            border: 2px solid #d2b48c; /* Gold border */
+            border-radius: 4px;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 35px;
+            font-weight: bold;
+            color: #d2b48c;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-button:hover {
+            color: #fff;
+        }
+        #rules-container {
+            /* This will be filled by the content of rules.html */
+        }
+        /* --- NEW CSS for Lobby Header --- */
+        .lobby-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px; /* Keeps the space below the header */
+        }
+
+        .lobby-header button {
+            width: auto; /* Prevents the button from stretching full-width */
+            margin-bottom: 0;
+        }
+        .lobby-actions {
+            display: flex; /* Aligns items in a row */
+            gap: 10px; /* Adds a small space between the buttons */
+            margin-top: 10px; /* Adds some space above the buttons */
+        }
+
+        .lobby-actions button {
+            margin-bottom: 0; /* Removes the bottom margin from individual buttons */
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="text-align: center;">Overthrow</h2>
+
+    <div id="lobby">
+        <div class="lobby-header">
+            <h3>Join or Create a Room</h3>
+            <button onclick="openRules()">View Rules</button>
+        </div>
+        <input id="nameInput" type="text" placeholder="Enter your name">
+        <input id="roomInput" type="text" placeholder="Enter room code">
+
+        <div class="lobby-actions">
+            <button onclick="joinRoom()">Join Room</button>
+            <button onclick="createRoom()">Create Room</button>
+        </div>
+    </div>
+
+    <div id="room" style="display: none;">
+        <p id="roomDisplay"></p>
+        <ul id="players"></ul>
+        <div id="start-game-container"></div> 
+        <button onclick="openRules()">View Rules</button>
+        <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        
+        <div id="game-board">
+            <div id="player-grid"></div>
+            <div id="action-menu"></div>
+        </div>
+
+        <div id="sidebar">
+            <h4>Action Log</h4>
+            <button onclick="openRules()" style="width: 100%; margin-bottom: 15px;">View Rules</button>
+            <div id="action-log"></div>
+            <div id="chat-area">
+                <h4>Chat</h4>
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="send-chat-btn" onclick="sendChatMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <p id="status" style="text-align: center; margin-top: 20px;"></p>
+
+    <div id="rules-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeRules()">&times;</span>
+            <div id="rules-container">
+                <!-- Rules content will be loaded here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // --- All your existing JavaScript logic remains exactly the same ---
+        const socket = io('https://overthrow-game.onrender.com');
+        let currentRoom = null;
+        let gameState = null;
+        let selectedCards = [];
+        let selectingTargetFor = null;
+
+        socket.on('gameUpdate', (newGameState) => {
+            console.log('Received game update:', newGameState);
+            gameState = newGameState;
+            renderGameState();
+        });
+
+        socket.on('gameStarted', (initialGameState) => {
+            console.log('Game is starting!', initialGameState);
+            gameState = initialGameState;
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('room').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            renderGameState();
+        });
+        function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+
+            if (message) {
+                // Send the message to the server
+                socket.emit('chatMessage', { roomId: currentRoom, message: message });
+                chatInput.value = ''; // Clear the input box
+            }
+        }
+        function openRules() {
+            const modal = document.getElementById('rules-modal');
+            const rulesContainer = document.getElementById('rules-container');
+            
+            // Fetch the rules content from the separate file
+            fetch('/rules.html')
+                .then(response => response.text())
+                .then(html => {
+                    rulesContainer.innerHTML = html;
+                    modal.style.display = 'flex'; // This makes the modal visible
+                })
+                .catch(error => {
+                    console.error("Could not load rules:", error);
+                    rulesContainer.innerHTML = "<p>Error: Could not load the rule book.</p>";
+                    modal.style.display = 'flex';
+                });
+        }
+
+        function closeRules() {
+            document.getElementById('rules-modal').style.display = 'none'; // This hides the modal
+        }
+        function revealCard(cardName) {
+            socket.emit('revealCard', { roomId: currentRoom, cardName: cardName });
+        }
+        function respondToAction(response) {
+            console.log(`Responding to action with: ${response}`);
+            socket.emit('challengeResponse', { roomId: currentRoom, response: response });
+            document.getElementById('action-menu').innerHTML = `<h4>Waiting for other players...</h4>`;
+        }
+        function cancelTargetSelection() {
+            selectingTargetFor = null;
+            renderGameState();
+        }
+        function declareBlock(blockType) {
+            socket.emit('declareBlock', { roomId: currentRoom, blockType: blockType });
+        }
+        function respondToSmuggleGoods(response) {
+          console.log(`Responding to Smuggle Goods with: ${response}`);
+          socket.emit('smuggleGoodsResponse', { roomId: currentRoom, response: response });
+        }
+        function respondToBlock(response) {
+            socket.emit('blockResponse', { roomId: currentRoom, response: response });
+        }
+        function initiateTargetedAction(action) {
+            selectingTargetFor = action;
+            renderGameState();
+        }
+        function performAction(action, targetId = null) {
+            socket.emit('performAction', { roomId: currentRoom, action, targetId });
+            selectingTargetFor = null; 
+        }
+        function selectExchangeCard(cardName) {
+            selectedCards.push(cardName);
+            if (selectedCards.length === 2) {
+                socket.emit('returnExchangeCards', { roomId: currentRoom, keptCards: selectedCards });
+                selectedCards = [];
+            }
+        }
+
+        function renderGameState() {
+            if (!gameState) return;
+
+            const playerGrid = document.getElementById('player-grid');
+            const actionMenu = document.getElementById('action-menu');
+            const actionLog = document.getElementById('action-log');
+
+            playerGrid.innerHTML = '';
+
+            const me = gameState.players.find(p => p.id === socket.id);
+            const mercyRuleActive = gameState.players.some(p => p.id !== socket.id && p.isAlive && p.cards.length === 2);
+
+            gameState.players.forEach((player, index) => {
+                const playerBox = document.createElement('div');
+                playerBox.className = 'player-box';
+                
+                if (player.id === socket.id) playerBox.classList.add('is-me');
+                if (index === gameState.currentPlayerIndex) playerBox.classList.add('is-turn');
+                if (!player.isAlive) playerBox.classList.add('is-eliminated');
+
+                let revealedHtml = player.revealedCards.length > 0
+                    ? `<p>Revealed: <span class="revealed-cards">${player.revealedCards.join(', ')}</span></p>`
+                    : '';
+                
+             
+                const cardImageMap = {
+                    'Warrior': '/images/warrior.png',
+                    'Thief': '/images/thief.png',
+                    'Tax Collector': '/images/taxCollector.png',
+                    'Defender': '/images/defender.png',
+                    'Courtier': '/images/courtier.png'
+                };
+                const cardBackUrl = '/images/overthrowBackofCard.png';
+
+                let cardsHtml = '<div class="cards-area">';
+
+                // For your own hand, show your face-up cards
+                if (player.id === socket.id) {
+                    player.cards.forEach(cardName => {
+                        const imageUrl = cardImageMap[cardName] || cardBackUrl; 
+                        cardsHtml += `<img src="${imageUrl}" class="card-image" alt="${cardName}">`;
+                    });
+                } 
+                // For opponents, show hidden cards first (left), then revealed cards (right)
+                else {
+                    // First, show their remaining hidden cards face-down
+                    for (let i = 0; i < player.cards.length; i++) {
+                        cardsHtml += `<img src="${cardBackUrl}" class="card-image" alt="Face-down card">`;
+                    }
+                    // Then, show their revealed cards face-up
+                    player.revealedCards.forEach(cardName => {
+                        const imageUrl = cardImageMap[cardName] || cardBackUrl;
+                        cardsHtml += `<img src="${imageUrl}" class="card-image" alt="${cardName}">`;
+                    });
+                }
+                cardsHtml += '</div>';
+
+                // We no longer need the separate "Revealed" text line.
+                let coinsHtml = '<div class="coins-area">';
+                const coinUrl = '/images/ducat4.jpg';
+                for (let i = 0; i < player.ducats; i++) { // <-- Change here
+                    coinsHtml += `<img src="${coinUrl}" class="coin-image" alt="Ducat">`; // <-- Change here
+                }
+                coinsHtml += '</div>';
+
+                playerBox.innerHTML = `
+                    <h4>${player.name} ${player.id === socket.id ? '(You)' : ''}</h4>
+                    <div class="player-info-area">
+                        ${cardsHtml}
+                        ${coinsHtml}
+                    </div>
+                `;
+                playerGrid.appendChild(playerBox);
+            });
+
+            actionMenu.innerHTML = '';
+            const myTurn = gameState.players[gameState.currentPlayerIndex].id === socket.id;
+
+            switch (gameState.phase) {
+                case 'action':
+                    if (myTurn) {
+                        if (me.ducats >= 10) {
+                            actionMenu.innerHTML = `<h4>You have ${me.ducats} ducats and must Overthrow!</h4>`;
+                            gameState.players.forEach(target => {
+                                if (mercyRuleActive && target.cards.length === 1) return;
+                                if (target.id !== socket.id && target.isAlive) {
+                                    actionMenu.innerHTML += `<button onclick="performAction('overthrow', '${target.id}')">Overthrow ${target.name}</button>`;
+                                }
+                            });
+                        } else if (selectingTargetFor) {
+                            actionMenu.innerHTML = `<h4>Who do you want to ${selectingTargetFor}?</h4>`;
+                            gameState.players.forEach(target => {
+                                if ((selectingTargetFor === 'overthrow' || selectingTargetFor === 'attack') && mercyRuleActive && target.cards.length === 1) return;
+                                if (target.id !== socket.id && target.isAlive) {
+                                    actionMenu.innerHTML += `<button onclick="performAction('${selectingTargetFor}', '${target.id}')">${target.name}</button>`;
+                                }
+                            });
+                            actionMenu.innerHTML += `<button onclick="cancelTargetSelection()">Cancel</button>`;
+                        } else {
+                            let actionsHtml = `<h4>Your Actions</h4>`;
+                            actionsHtml += `<button onclick="performAction('harvest_crop')">Harvest Crop</button>`;
+                            actionsHtml += `<button onclick="performAction('smuggle_goods')">Smuggle Goods</button>`;
+                            actionsHtml += `<button onclick="performAction('levy')">Levy (Tax Collector)</button>`;
+                            actionsHtml += `<button onclick="performAction('exchange')">Exchange (Courtier)</button>`;
+                            actionsHtml += `<button onclick="initiateTargetedAction('thieve')">Thieve (Thief)</button>`;
+                            if (me.ducats >= 3) actionsHtml += `<button onclick="initiateTargetedAction('attack')">Attack (Warrior)</button>`;
+                            if (me.ducats >= 7) actionsHtml += `<button onclick="initiateTargetedAction('overthrow')">Overthrow</button>`;
+                            actionMenu.innerHTML = actionsHtml;
+                        }
+                    }
+                    break;
+                case 'challenge':
+                    const actor = gameState.players.find(p => p.id === gameState.pendingAction.actorId);
+                    actionMenu.innerHTML = `<h4>${actor.name} is attempting to use ${gameState.pendingAction.action}!</h4>`;
+                    if (actor.id !== socket.id && me.isAlive) {
+                        actionMenu.innerHTML += `<button onclick="respondToAction('challenge')">Challenge</button> <button onclick="respondToAction('pass')">Pass</button>`;
+                    }
+                    break;
+                case 'declare_block':
+                     const actionInfo = gameState.pendingAction;
+                     const target = gameState.players.find(p => p.id === actionInfo.targetId);
+                     actionMenu.innerHTML = `<h4>Waiting for ${target.name} to respond...</h4>`;
+                     if (actionInfo.targetId === socket.id) {
+                         let blockButtons = `<h4>Do you want to block the ${actionInfo.action}?</h4>`;
+                         if (actionInfo.action.toLowerCase() === 'thieve') {
+                            blockButtons += `<button onclick="declareBlock('Thief')">Thwart with Thief</button> <button onclick="declareBlock('Courtier')">Thwart with Courtier</button>`;
+                         } else if (actionInfo.action.toLowerCase() === 'attack') {
+                             blockButtons += `<button onclick="declareBlock('Defender')">Block with Defender</button>`;
+                         }
+                         blockButtons += `<button onclick="declareBlock('No Block')">Do Not Block</button>`;
+                         actionMenu.innerHTML = blockButtons;
+                     }
+                     break;
+                 case 'block_declaration_period':
+                     const smuggleGoodsActor = gameState.players.find(p => p.id === gameState.pendingAction.actorId);
+                     actionMenu.innerHTML = `<h4>${smuggleGoodsActor.name} is attempting to Smuggle Goods!</h4>`;
+                     if (smuggleGoodsActor.id !== socket.id && me.isAlive) {
+                         actionMenu.innerHTML += `<button onclick="respondToSmuggleGoods('block')">Block with Tax Collector</button> <button onclick="respondToSmuggleGoods('pass')">Pass</button>`;
+                     }
+                     break;
+                 case 'block_challenge':
+                     const blocker = gameState.players.find(p => p.id === gameState.pendingBlock.blockerId);
+                     actionMenu.innerHTML = `<h4>${blocker.name} is attempting to BLOCK with a ${gameState.pendingBlock.blockingCard}!</h4>`;
+                     if (blocker.id !== socket.id && me.isAlive) {
+                         actionMenu.innerHTML += `<button onclick="respondToBlock('challenge')">Challenge Block</button> <button onclick="respondToBlock('pass')">Pass</button>`;
+                     }
+                     break;
+                 case 'exchange_cards':
+                     actionMenu.innerHTML = `<h4>Waiting for ${gameState.players.find(p => p.id === gameState.exchangeInfo.playerId).name} to exchange...</h4>`;
+                     if (gameState.exchangeInfo.playerId === socket.id) {
+                         actionMenu.innerHTML = `<h4>You drew two cards. Choose which two to KEEP.</h4>`;
+                         gameState.exchangeInfo.options.forEach(card => {
+                             actionMenu.innerHTML += `<button onclick="selectExchangeCard('${card}')">${card}</button>`;
+                         });
+                     }
+                     break;
+                 case 'reveal_card':
+                     const playerToReveal = gameState.players.find(p => p.id === gameState.playerToReveal.id);
+                     actionMenu.innerHTML = `<h4>Waiting for ${playerToReveal.name} to reveal a card...</h4>`;
+                     if (gameState.playerToReveal.id === socket.id) {
+                         let reasonMessage = 'You must reveal a card:';
+                         // ... (your existing switch for reasonMessage) ...
+                         actionMenu.innerHTML = `<h4>${gameState.playerToReveal.reason}! Choose a card to reveal:</h4>`;
+                         me.cards.forEach(card => {
+                            actionMenu.innerHTML += `<button onclick="revealCard('${card}')">${card}</button>`;
+                         });
+                     }
+                     break;
+                 case 'game_over':
+                     actionMenu.innerHTML = `<h2>Game Over</h2>`;
+                     break;
+            }
+
+            actionLog.innerHTML = gameState.actionLog.join('<br>');
+        }
+
+        function createRoom() {
+            const username = document.getElementById('nameInput').value.trim();
+            if (username) {
+                socket.emit('createRoom', { username });
+            } else {
+                alert('Please enter a name!');
+            }
+        }
+        function joinRoom() {
+            const username = document.getElementById('nameInput').value.trim();
+            const roomId = document.getElementById('roomInput').value.trim();
+            if (username && roomId) {
+                socket.emit('joinRoom', { roomId, username });
+            } else {
+                alert('Please enter your name and a room code!');
+            }
+        }
+        function leaveRoom() {
+            window.location.reload();
+        }
+        socket.on('roomCreated', (roomId) => {
+            currentRoom = roomId;
+            showRoom(roomId);
+        });
+        socket.on('roomUpdate', (room) => {
+            if (!currentRoom) {
+                const roomId = document.getElementById('roomInput').value.trim();
+                showRoom(roomId);
+            }
+            const list = document.getElementById('players');
+            list.innerHTML = '';
+            room.players.forEach((player) => {
+                const li = document.createElement('li');
+                li.textContent = player.name;
+                if (player.id === socket.id) {
+                    li.textContent += ' (You)';
+                    li.style.fontWeight = 'bold';
+                }
+                list.appendChild(li);
+            });
+            const startButtonContainer = document.getElementById('start-game-container');
+            if (room.hostId === socket.id && room.players.length >= 2) {
+                startButtonContainer.innerHTML = '<button onclick="startGame()">Start Game</button>';
+            } else {
+                startButtonContainer.innerHTML = '';
+            }
+        });
+        socket.on('errorMessage', (msg) => {
+            alert(msg);
+        });
+        function showRoom(roomId) {
+            currentRoom = roomId;
+            document.getElementById('roomDisplay').innerText = `You are in Room: ${roomId}`;
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('room').style.display = 'block';
+        }
+        function startGame() {
+            socket.emit('startGame', currentRoom);
+        }
+        socket.on('connect', () => {
+            document.getElementById('status').innerText = `Connected! Your ID: ${socket.id}`;
+        });
+    </script>
+</body>
+</html>
